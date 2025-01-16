@@ -309,6 +309,7 @@ type compound_form =
   | DotTyp
   | TypeAsc
   | TypPlus
+  | PatPlus
   // UNARY PREFIX OPERATORS
   | Not
   | TypSumSingle
@@ -394,6 +395,7 @@ let get: compound_form => t =
   | DotTyp => mk_infix(".", Typ, P.dot)
   | TypeAsc => mk(ss, [":"], mk_bin'(P.cast, Exp, Exp, [], Typ))
   | TypPlus => mk_infix("+", Typ, P.type_plus)
+  | PatPlus => mk_infix("+", Pat, P.plus)
   // UNARY PREFIX OPERATORS
   | Not => mk(ii, ["!"], mk_pre(P.not_, Exp, []))
   | TypSumSingle => mk(ss, ["+"], mk_pre(P.or_, Typ, []))

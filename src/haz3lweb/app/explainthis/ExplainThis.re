@@ -896,6 +896,31 @@ let get_doc =
           } else {
             basic(FunctionExp.functions_cons);
           }
+        | Add(p1, p2) =>
+          if (FunctionExp.function_add_exp.id
+              == get_specificity_level(FunctionExp.functions_add)) {
+            get_message(
+              ~colorings=
+                FunctionExp.function_add_exp_coloring_ids(
+                  ~pat1_id=Pat.rep_id(p1),
+                  ~pat2_id=Pat.rep_id(p2),
+                  ~body_id,
+                ),
+              ~format=
+                Some(
+                  msg =>
+                    Printf.sprintf(
+                      Scanf.format_from_string(msg, "%s%s%s"),
+                      Id.to_string(Pat.rep_id(p1)),
+                      Id.to_string(Pat.rep_id(p2)),
+                      Id.to_string(body_id),
+                    ),
+                ),
+              FunctionExp.functions_add,
+            );
+          } else {
+            basic(FunctionExp.functions_add);
+          }
         | Var(var) =>
           if (FunctionExp.function_var_exp.id
               == get_specificity_level(FunctionExp.functions_var)) {
@@ -1487,6 +1512,30 @@ let get_doc =
           } else {
             basic(LetExp.lets_cons);
           }
+        | Add(p1, p2) =>
+          if (LetExp.let_add_exp.id == get_specificity_level(LetExp.lets_add)) {
+            get_message(
+              ~colorings=
+                LetExp.let_add_exp_coloring_ids(
+                  ~pat1_id=Pat.rep_id(p1),
+                  ~pat2_id=Pat.rep_id(p2),
+                  ~def_id,
+                ),
+              ~format=
+                Some(
+                  msg =>
+                    Printf.sprintf(
+                      Scanf.format_from_string(msg, "%s%s%s"),
+                      Id.to_string(def_id),
+                      Id.to_string(Pat.rep_id(p1)),
+                      Id.to_string(Pat.rep_id(p2)),
+                    ),
+                ),
+              LetExp.lets_add,
+            );
+          } else {
+            basic(LetExp.lets_add);
+          }
         | Var(var) =>
           if (LetExp.let_var_exp.id == get_specificity_level(LetExp.lets_var)) {
             get_message(
@@ -2044,6 +2093,10 @@ let get_doc =
           ListPat.listlit,
         );
       }
+    | Add(p1, p2) =>
+      message_single(
+        PatternAdd.single(~p1_id=Pat.rep_id(p1), ~p2_id=Pat.rep_id(p2)),
+      )
     | Cons(hd, tl) =>
       let hd_id = List.nth(hd.ids, 0);
       let tl_id = List.nth(tl.ids, 0);

@@ -83,7 +83,7 @@ and exp_term =
   | Test(exp_t)
   | Filter(stepper_filter_kind_t, exp_t)
   | Closure([@show.opaque] closure_environment_t, exp_t)
-  | Parens(exp_t) // (
+  | Parens(exp_t)
   | Cons(exp_t, exp_t)
   | ListConcat(exp_t, exp_t)
   | UnOp(Operators.op_un, exp_t)
@@ -110,6 +110,7 @@ and pat_term =
   | ListLit(list(pat_t))
   | Constructor(string, option(typ_t)) // Typ.t field is only meaningful in dynamic patterns
   | Cons(pat_t, pat_t)
+  | Add(pat_t, pat_t)
   | Var(Var.t)
   | Tuple(list(pat_t))
   | Parens(pat_t)
@@ -547,6 +548,7 @@ and Pat: {
         | ListLit(ts) => ListLit(List.map(pat_map_term, ts))
         | Ap(e1, e2) => Ap(pat_map_term(e1), pat_map_term(e2))
         | Cons(e1, e2) => Cons(pat_map_term(e1), pat_map_term(e2))
+        | Add(e1, e2) => Add(pat_map_term(e1), pat_map_term(e2))
         | Tuple(xs) => Tuple(List.map(pat_map_term, xs))
         | TupLabel(label, e) =>
           TupLabel(pat_map_term(label), pat_map_term(e))
@@ -573,10 +575,12 @@ and Pat: {
     | (Float(f1), Float(f2)) => f1 == f2
     | (String(s1), String(s2)) => s1 == s2
     | (Label(s1), Label(s2)) => s1 == s2
+    | (Var(v1), Var(v2)) => v1 == v2
     | (Constructor(c1, Some(t1)), Constructor(c2, Some(t2))) =>
       c1 == c2 && Typ.fast_equal(t1, t2)
     | (Constructor(c1, None), Constructor(c2, None)) => c1 == c2
-    | (Var(v1), Var(v2)) => v1 == v2
+    | (Add(x1, x2), Add(y1, y2)) =>
+      fast_equal(x1, y1) && fast_equal(x2, y2)
     | (ListLit(xs), ListLit(ys)) =>
       List.length(xs) == List.length(ys) && List.equal(fast_equal, xs, ys)
     | (Cons(x1, y1), Cons(x2, y2)) =>
@@ -600,6 +604,7 @@ and Pat: {
     | (ListLit(_), _)
     | (Constructor(_), _)
     | (Cons(_), _)
+    | (Add(_), _)
     | (Var(_), _)
     | (TupLabel(_), _)
     | (Tuple(_), _)

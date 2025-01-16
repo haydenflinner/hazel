@@ -1427,6 +1427,21 @@ and upat_to_info_map =
       let (p, m) =
         go(~ctx, ~under_ascription=true, ~mode=Ana(ann.term), p, m);
       add(~self=Just(ann.term), ~ctx=p.ctx, ~constraint_=p.constraint_, m);
+    | Add(p1, p2) =>
+      let left_const = Pat.is_const_int(p1);
+      let right_const = Pat.is_const_int(p2);
+      let (p1, m) = go(~ctx, ~mode=Ana(Typ.temp(Int)), p1, m);
+      let (p2, m) = go(~ctx=p1.ctx, ~mode=Ana(Typ.temp(Int)), p2, m);
+      add(
+        ~self=IsPatternAdd({left_const, right_const}),
+        ~ctx=p2.ctx,
+        ~constraint_=
+          switch (left_const, right_const) {
+          | (Some(l), Some(r)) => Int(l + r)
+          | _ => Truth
+          },
+        m,
+      );
     };
 
   // This is to allow lifting single values into a singleton labeled tuple when the label is not present

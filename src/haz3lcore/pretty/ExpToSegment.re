@@ -107,6 +107,7 @@ let external_precedence_pat = (dp: Pat.t) =>
   | Ap(_) => Precedence.ap
   | Cast(_) => Precedence.cast
   | Tuple(_) => Precedence.prod
+  | Add(_, _) => Precedence.plus
 
   // Matt: I think multiholes are min because we don't know the precedence of the `⟩?⟨`s
   | MultiHole(_) => Precedence.min
@@ -429,6 +430,12 @@ and parenthesize_pat =
       parenthesize_pat(p) |> paren_pat_assoc_at(Precedence.cast),
       parenthesize_typ(t1) |> paren_typ_at(Precedence.max), // Hack[Matt]: always add parens to get the arrows right
       parenthesize_typ(t2) |> paren_typ_at(Precedence.max),
+    )
+    |> rewrap
+  | Add(p1, p2) =>
+    Add(
+      parenthesize_pat(p1) |> paren_pat_assoc_at(Precedence.plus),
+      parenthesize_pat(p2) |> paren_pat_at(Precedence.plus),
     )
     |> rewrap
   };
@@ -1153,6 +1160,11 @@ and pat_to_pretty = (~settings: Settings.t, pat: Pat.t): pretty => {
     let+ p = go(p)
     and+ t = typ_to_pretty(~settings: Settings.t, t);
     p @ [mk_form(Typeann, id, [])] @ t;
+  | Add(p1, p2) =>
+    let id = pat |> Pat.rep_id;
+    let+ p1 = go(p1)
+    and+ p2 = go(p2);
+    p1 @ [mk_form(PatPlus, id, [])] @ p2;
   };
 }
 and typ_to_pretty = (~settings: Settings.t, typ: Typ.t): pretty => {

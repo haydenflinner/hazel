@@ -26,6 +26,7 @@ let rec binds_var = (m: Statics.Map.t, x: Var.t, dp: DHPat.t): bool =>
       let new_list = List.map(binds_var(m, x), d_list);
       List.fold_left((||), false, new_list);
     | Ap(_, _) => false
+    | Add(dp1, dp2) => binds_var(m, x, dp1) || binds_var(m, x, dp2)
     }
   };
 

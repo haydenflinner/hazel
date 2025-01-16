@@ -465,6 +465,7 @@ and pat_term: unsorted => (Pat.term, list(Id.t)) = {
           );
         }
       | ([(_id, (["::"], []))], []) => ret(Cons(l, r))
+      | ([(_id, (["+"], []))], []) => ret(Add(l, r))
       | _ => ret(hole(tm))
       }
     }

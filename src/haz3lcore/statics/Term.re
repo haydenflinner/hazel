@@ -18,7 +18,8 @@ module Pat = {
     | Tuple
     | Parens
     | Ap
-    | Cast;
+    | Cast
+    | Add;
 
   include TermBase.Pat;
 
@@ -58,7 +59,8 @@ module Pat = {
     | Tuple(_) => Tuple
     | Parens(_) => Parens
     | Ap(_) => Ap
-    | Cast(_) => Cast;
+    | Cast(_) => Cast
+    | Add(_, _) => Add;
 
   let show_cls: cls => string =
     fun
@@ -79,7 +81,8 @@ module Pat = {
     | Tuple => "Tuple"
     | Parens => "Parenthesized pattern"
     | Ap => "Constructor application"
-    | Cast => "Annotation";
+    | Cast => "Annotation"
+    | Add => "Addition pattern";
 
   let rec is_var = (pat: t) => {
     switch (pat.term) {
@@ -100,7 +103,8 @@ module Pat = {
     | Tuple(_)
     | Label(_)
     | Constructor(_)
-    | Ap(_) => false
+    | Ap(_)
+    | Add(_, _) => false
     };
   };
 
@@ -124,7 +128,8 @@ module Pat = {
     | Label(_)
     | Tuple(_)
     | Constructor(_)
-    | Ap(_) => false
+    | Ap(_)
+    | Add(_, _) => false
     };
   };
 
@@ -149,7 +154,8 @@ module Pat = {
       | Var(_)
       | Cast(_)
       | Constructor(_)
-      | Ap(_) => false
+      | Ap(_)
+      | Add(_, _) => false
       }
     );
 
@@ -174,7 +180,8 @@ module Pat = {
       | Cons(_, _)
       | Var(_)
       | Constructor(_)
-      | Ap(_) => false
+      | Ap(_)
+      | Add(_, _) => false
       }
     );
 
@@ -197,7 +204,8 @@ module Pat = {
     | Label(_)
     | Tuple(_)
     | Constructor(_)
-    | Ap(_) => None
+    | Ap(_)
+    | Add(_, _) => None
     };
   };
 
@@ -225,7 +233,8 @@ module Pat = {
     | Label(_)
     | Tuple(_)
     | Constructor(_)
-    | Ap(_) => None
+    | Ap(_)
+    | Add(_, _) => None
     };
   };
 
@@ -244,6 +253,11 @@ module Pat = {
         } else {
           Some(List.map(Option.get, vars));
         };
+      | Add(pat1, pat2) =>
+        switch (get_bindings(pat1), get_bindings(pat2)) {
+        | (Some(vars1), Some(vars2)) => Some(vars1 @ vars2)
+        | _ => None
+        }
       | Label(_)
       | Invalid(_)
       | EmptyHole
@@ -284,7 +298,8 @@ module Pat = {
       | Cons(_, _)
       | Var(_)
       | Constructor(_)
-      | Ap(_) => None
+      | Ap(_)
+      | Add(_, _) => None
       };
     };
 
@@ -327,8 +342,36 @@ module Pat = {
     | TupLabel(_, dp) => bound_vars(dp)
     | Tuple(dps) => List.flatten(List.map(bound_vars, dps))
     | Cons(dp1, dp2) => bound_vars(dp1) @ bound_vars(dp2)
+    | Add(dp1, dp2) => bound_vars(dp1) @ bound_vars(dp2)
     | ListLit(dps) => List.flatten(List.map(bound_vars, dps))
     | Ap(_, dp1) => bound_vars(dp1)
+    };
+
+  let rec is_const_int = (dp: t): option(int) =>
+    switch (dp.term) {
+    | Int(n) => Some(n)
+    | Parens(dp) => is_const_int(dp)
+    | Cast(dp, _, _) => is_const_int(dp)
+    | Add(dp1, dp2) =>
+      switch (is_const_int(dp1), is_const_int(dp2)) {
+      | (Some(n1), Some(n2)) => Some(n1 + n2)
+      | _ => None
+      }
+    | EmptyHole
+    | MultiHole(_)
+    | Wild
+    | Invalid(_)
+    | Float(_)
+    | Bool(_)
+    | String(_)
+    | ListLit(_)
+    | Constructor(_)
+    | Cons(_, _)
+    | Var(_)
+    | Tuple(_)
+    | Label(_)
+    | TupLabel(_, _)
+    | Ap(_) => None
     };
 };
 

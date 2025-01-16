@@ -94,6 +94,10 @@ let dhpat_extend_ctx = (dhpat: DHPat.t, ty: Typ.t, ctx: Ctx.t): option(Ctx.t) =>
     | Constructor(_) => Some([]) // TODO: make this stricter
     | Cast(dhp, ty1, ty2) =>
       Typ.equal(ty, ty2) ? dhpat_var_entry(dhp, ty1) : None
+    | Add(dhp1, dhp2) =>
+      let* l1 = dhpat_var_entry(dhp1, Int |> Typ.temp);
+      let* l2 = dhpat_var_entry(dhp2, Int |> Typ.temp);
+      Some(l1 @ l2);
     };
   };
   let+ l = dhpat_var_entry(dhpat, ty);
@@ -131,6 +135,7 @@ let rec dhpat_synthesize = (dhpat: DHPat.t, ctx: Ctx.t): option(Typ.t) => {
   | Bool(_) => Some(Bool |> Typ.temp)
   | String(_) => Some(String |> Typ.temp)
   | Cast(_, _, ty) => Some(ty)
+  | Add(_, _) => Some(Int |> Typ.temp)
   };
 };
 

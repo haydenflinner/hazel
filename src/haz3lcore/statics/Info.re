@@ -76,7 +76,9 @@ type error_common =
       duplicate_labels: list(LabeledTuple.label),
       invalid_labels: list(LabeledTuple.label),
       typ: Typ.t,
-    });
+    })
+  /* Pattern add with two degrees of freedom (e.g. x + y instead of x + 1) */
+  | UnconstrainedPatternAdd;
 
 [@deriving (show({with_path: false}), sexp, yojson, eq)]
 type error_exp =
@@ -414,6 +416,9 @@ let rec status_common =
     | (_, Some(syn_ty)) => status_common(ctx, mode, Just(syn_ty))
     | _ => InHole(NoType(FreeConstructor(name)))
     }
+  | (IsPatternAdd({left_const: None, right_const: None}), _) =>
+    InHole(UnconstrainedPatternAdd)
+  | (IsPatternAdd(_), _) => NotInHole(Syn(Int |> Typ.temp))
   | (BadToken(name), _) => InHole(NoType(BadToken(name)))
   | (BadTrivAp(ty), _) => InHole(NoType(BadTrivAp(ty)))
   | (BadLabel(label), _) => InHole(NoType(BadLabel(label)))
@@ -467,6 +472,7 @@ let rec status_pat = (ctx: Ctx.t, mode: Mode.t, self: Self.pat): status_pat =>
     let additional_err =
       switch (status_pat(ctx, mode, self)) {
       | InHole(Common(Inconsistent(Internal(_) | Expectation(_))) as err)
+      | InHole(Common(UnconstrainedPatternAdd) as err)
       | InHole(Common(NoType(_)) as err) => Some(err)
       | NotInHole(_) => None
       | InHole(Common(DuplicateLabel(_)))
@@ -511,6 +517,7 @@ let rec status_exp = (ctx: Ctx.t, mode: Mode.t, self: Self.exp): status_exp =>
       | InHole(Common(DuplicateLabel(_)))
       | InHole(
           FreeVariable(_) | InexhaustiveMatch(_) | UnusedDeferral |
+          Common(UnconstrainedPatternAdd) |
           BadPartialAp(_),
         ) =>
         failwith("InHole(InexhaustiveMatch(impossible_err))")
@@ -695,7 +702,8 @@ let fixed_typ_err_common: error_common => Typ.t =
   | Inconsistent(Internal(_)) => Unknown(Internal) |> Typ.temp // Should this be some sort of meet?
   | Inconsistent(WithArrow(_)) =>
     Arrow(Unknown(Internal) |> Typ.temp, Unknown(Internal) |> Typ.temp)
-    |> Typ.temp;
+    |> Typ.temp
+  | UnconstrainedPatternAdd => Int |> Typ.temp;
 
 let fixed_typ_err: error_exp => Typ.t =
   fun

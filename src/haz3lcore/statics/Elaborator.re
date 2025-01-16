@@ -232,6 +232,15 @@ let rec elaborate_pattern =
     | Cast(p, _, _) =>
       let (p', ty) = elaborate_pattern(m, p);
       p' |> cast_from(ty |> Typ.normalize(ctx) |> Typ.all_ids_temp);
+    | Add(p1, p2) =>
+      let (p1', ty1) = elaborate_pattern(m, p1);
+      let (p2', ty2) = elaborate_pattern(m, p2);
+      Add(
+        p1' |> fresh_pat_cast(_, ty1, Int |> Typ.temp),
+        p2' |> fresh_pat_cast(_, ty2, Int |> Typ.temp),
+      )
+      |> rewrap
+      |> cast_from(Int |> Typ.temp);
     | Constructor(c, _) =>
       let mode =
         switch (Id.Map.find_opt(Pat.rep_id(upat), m)) {

@@ -550,6 +550,7 @@ and Pat: {
     | TuplePat(pats) =>
       Parens(Tuple(List.map(of_menhir_ast', pats)) |> Haz3lcore.Pat.fresh)
     | ApPat(pat1, pat2) => Ap(of_menhir_ast'(pat1), of_menhir_ast'(pat2))
+    | AddPat(p1, p2) => Add(of_menhir_ast'(p1), of_menhir_ast'(p2))
     | ConsPat(p1, p2) =>
       Parens(
         Cons(of_menhir_ast'(p1), of_menhir_ast'(p2)) |> Haz3lcore.Pat.fresh,
@@ -588,6 +589,7 @@ and Pat: {
     | String(s) => StringPat(s)
     | Tuple(l) => TuplePat(List.map(of_core, l))
     | Bool(b) => BoolPat(b)
+    | Add(p1, p2) => AddPat(of_core(p1), of_core(p2))
     | Cons(p1, p2) => ConsPat(of_core(p1), of_core(p2))
     | ListLit(l) => ListPat(List.map(of_core, l))
     | Ap(p1, p2) => ApPat(of_core(p1), of_core(p2))

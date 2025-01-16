@@ -41,6 +41,10 @@ type t =
       typ: Typ.t,
     }) /* Tuple/TupLabel contains malformed labels, duplicate labels, and/or invalid labels */
   | IsMulti /* Multihole, treated as hole */
+  | IsPatternAdd({
+      left_const: option(int),
+      right_const: option(int),
+    }) /* Pattern add, to mark `let x + y = ?` as an error */
   | IsConstructor({
       name: Constructor.t,
       syn_ty: option(Typ.t),
@@ -86,6 +90,7 @@ let typ_of: (Ctx.t, t) => option(Typ.t) =
     | Duplicate(_, Just(typ))
     | TupleLabelError({typ, _}) => Some(typ)
     | IsConstructor({syn_ty, _}) => syn_ty
+    | IsPatternAdd({left_const, right_const}) => Some(Typ.temp(Int))
     | BadToken(_)
     | BadTrivAp(_)
     | IsMulti

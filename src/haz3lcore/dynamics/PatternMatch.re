@@ -61,4 +61,16 @@ let rec matches = (dp: Pat.t, d: DHExp.t): match_result =>
   | Parens(p) => matches(p, d)
   | Cast(p, t1, t2) =>
     matches(p, Cast(d, t2, t1) |> DHExp.fresh |> Casts.transition_multiple)
+  | Add(p1, p2) =>
+    print_endline("HERE");
+    switch (Pat.is_const_int(p1), Pat.is_const_int(p2)) {
+    | (Some(n1), Some(n2)) => matches(Int(n1 + n2) |> Pat.fresh, d)
+    | (Some(n), None) =>
+      let* n1 = Unboxing.unbox(Int, d);
+      matches(p2, Int(n1 - n) |> DHExp.fresh);
+    | (None, Some(n)) =>
+      let* n2 = Unboxing.unbox(Int, d);
+      matches(p1, Int(n2 - n) |> DHExp.fresh);
+    | (None, None) => IndetMatch
+    };
   };

@@ -119,6 +119,7 @@ type pat =
   | TuplePat(list(pat))
   | BoolPat(bool)
   | ConsPat(pat, pat)
+  | AddPat(pat, pat)
   | ListPat(list(pat))
   | ApPat(pat, pat)
   | InvalidPat(string) // Menhir parser doesn't actually support invalid pats
