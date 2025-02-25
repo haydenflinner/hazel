@@ -93,6 +93,13 @@ module Update = {
     | Evaluation(evaluation)
     | ExplainThis(ExplainThisModel.Settings.action);
 
+  let can_undo = (action: t) => {
+    switch (action) {
+    | Evaluation(ShowSettings) => false
+    | _ => true
+    };
+  };
+
   let update = (action, settings: Model.t): Updated.t(Model.t) => {
     (
       switch (action) {
