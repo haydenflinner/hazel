@@ -109,10 +109,7 @@ rule token =
     (* DHExp Annotations *)
     | "()" { UNIT }
     (* Filters *)
-    | "pause" {PAUSE}
     | "debug" {DEBUG}
-    | "hide" {HIDE}
-    | "eval" {EVAL}
     (* Other *)
     | ";" {SEMI_COLON}
     | "test" {TEST}

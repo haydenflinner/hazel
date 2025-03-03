@@ -117,6 +117,7 @@ and pat_t('a) = Annotated.t(pat_term('a), 'a)
 and typ_term('a) =
   | Unknown(type_provenance('a))
   | Atom(Atom.cls)
+  | Filter
   | Var(string)
   | List(typ_t('a))
   | Arrow(typ_t('a), typ_t('a))
@@ -159,7 +160,7 @@ and type_provenance('a) =
   | Internal
 and filter('a) = {
   pat: exp_t('a),
-  act: FilterAction.t,
+  act: option(FilterAction.t),
 };
 
 
@@ -340,6 +341,7 @@ and map_typ_annotation: 'a 'b. ('a => 'b, typ_t('a)) => typ_t('b) =
         switch (term) {
         | Unknown(p) => Unknown(map_type_provenance_annotation(f, p))
         | Atom(c) => Atom(c)
+        | Filter => Filter
         | Var(s) => Var(s)
         | List(t) => List(map_typ_annotation(f, t))
         | Arrow(t1, t2) =>
@@ -516,6 +518,10 @@ module Factory = (DefaultAnnotation: DefaultAnnotation) => {
     };
     let nat = (~ann=?, i): exp_t(DefaultAnnotation.t) => {
       term: Atom(Nat(i)),
+      annotation: default_annotation(ann),
+    };
+    let filter = (~ann=?, a, c): exp_t(DefaultAnnotation.t) => {
+      term: Filter(a, c),
       annotation: default_annotation(ann),
     };
     let list_lit = (~ann=?, l): exp_t(DefaultAnnotation.t) => {
@@ -788,6 +794,10 @@ module Factory = (DefaultAnnotation: DefaultAnnotation) => {
     };
     let nat = (~ann=?, ()): typ_t(DefaultAnnotation.t) => {
       term: Atom(Nat),
+      annotation: default_annotation(ann),
+    };
+    let filter = (~ann=?, ()): typ_t(DefaultAnnotation.t) => {
+      term: Filter,
       annotation: default_annotation(ann),
     };
     let var = (~ann=?, s): typ_t(DefaultAnnotation.t) => {

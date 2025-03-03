@@ -289,10 +289,21 @@ module rec Exp: {
     | Cons(e1, e2) => cons(of_menhir_ast(e1), of_menhir_ast(e2))
     | ListConcat(e1, e2) =>
       list_concat(of_menhir_ast(e1), of_menhir_ast(e2))
-    | Filter(a, cond, body) =>
+    | Filter(None, ApExp(Var(name), cond), body) =>
       let dcond = of_menhir_ast(cond);
       let dbody = of_menhir_ast(body);
-      let act = FilterAction.of_menhir_ast(a);
+      let act = Language.FilterAction.t_of_string(name);
+      filter(
+        Filter({
+          pat: dcond,
+          act,
+        }),
+        dbody,
+      );
+    | Filter(act, cond, body) =>
+      let dcond = of_menhir_ast(cond);
+      let dbody = of_menhir_ast(body);
+      let act = act |> Option.map(FilterAction.of_menhir_ast);
       filter(
         Filter({
           pat: dcond,
@@ -351,7 +362,11 @@ module rec Exp: {
     | Cons(e1, e2) => Cons(of_core(e1), of_core(e2))
     | ListConcat(e1, e2) => ListConcat(of_core(e1), of_core(e2))
     | Filter(Filter({pat, act}), body) =>
-      Filter(FilterAction.of_core(act), of_core(pat), of_core(body))
+      Filter(
+        Option.map(FilterAction.of_core, act),
+        of_core(pat),
+        of_core(body),
+      )
     | TypAp(e, ty) => TypAp(of_core(e), Typ.of_core(ty))
     | UnOp(op, e) => UnOp(Operators.of_core_op_un(op), of_core(e))
     | DynamicErrorHole(e, s) =>
@@ -411,6 +426,7 @@ and Typ: {
     | BoolType => bool()
     | StringType => string()
     | NatType => nat()
+    | FilterType => filter()
     | UnknownType(p) =>
       switch (p) {
       | Internal => unknown(Internal)
@@ -465,6 +481,7 @@ and Typ: {
     | Atom(String) => StringType
     | Atom(Bool) => BoolType
     | Atom(Nat) => NatType
+    | Filter => FilterType
     | Var(x) => TypVar(x)
     | Prod(ts) => TupleType(List.map(of_core, ts))
     | List(t) => ArrayType(of_core(t))

@@ -130,6 +130,7 @@ module Ctr = {
     | Atom(Float)
     | Atom(Nat)
     | Atom(String)
+    | Filter
     | Arrow(_)
     | Forall(_)
     | Var(_) => Infinite

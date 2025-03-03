@@ -275,15 +275,48 @@ let tests =
         "test 3 == 3 end",
       ),
       full_parser_test(
-        "Filter",
+        "Filter (eval)",
         filter(
           Filter({
-            act: (Eval, All),
+            act: Some((Eval, All)),
             pat: int(3),
           }),
           int(3),
         ),
-        "eval 3 in 3" // TODO Use other filter commands
+        "debug eval(3) in 3" // TODO Use other filter commands
+      ),
+      full_parser_test(
+        "Filter (hide)",
+        filter(
+          Filter({
+            act: Some((Eval, One)),
+            pat: int(3),
+          }),
+          int(3),
+        ),
+        "debug hide(3) in 3" // TODO Use other filter commands
+      ),
+      full_parser_test(
+        "Filter (step)",
+        filter(
+          Filter({
+            act: Some((Step, All)),
+            pat: int(3),
+          }),
+          int(3),
+        ),
+        "debug step(3) in 3" // TODO Use other filter commands
+      ),
+      full_parser_test(
+        "Filter (stop)",
+        filter(
+          Filter({
+            act: Some((Step, One)),
+            pat: int(3),
+          }),
+          int(3),
+        ),
+        "debug stop(3) in 3" // TODO Use other filter commands
       ),
       full_parser_test(
         "List Concat",

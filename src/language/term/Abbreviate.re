@@ -819,6 +819,12 @@ and abbreviate_typ = (typ: Typ.t): Typ.t => {
       } else {
         Atom(String);
       }
+    | Filter =>
+      if (available^ < 6) {
+        indet_term_typ;
+      } else {
+        Filter;
+      }
     | Var(v) => Var(abbreviate_str(available^, v))
     | Label(v) => Label(abbreviate_str(available^, v))
     | List(t) =>

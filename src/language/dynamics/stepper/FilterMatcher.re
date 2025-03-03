@@ -405,7 +405,7 @@ let matches =
     (~env: ClosureEnvironment.t, ~exp: DHExp.t, ~flt: TermBase.filter)
     : option(FilterAction.t) =>
   if (matches_exp(~denv=env, exp, ~fenv=env, flt.pat)) {
-    Some(flt.act);
+    flt.act;
   } else {
     None;
   };

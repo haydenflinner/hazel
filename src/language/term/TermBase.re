@@ -591,6 +591,7 @@ and Typ: {
         | Unknown(SynSwitch)
         | Unknown(Internal)
         | Atom(_)
+        | Filter
         | Label(_)
         | Var(_) => term
         | List(t) => List(typ_map_term(t))
@@ -626,6 +627,7 @@ and Typ: {
       let (term, rewrap) = Grammar.Annotated.unwrap(ty);
       switch (term) {
       | Atom(_) => ty
+      | Filter => ty
       | Label(name) => Grammar.Label(name) |> rewrap
       | Unknown(prov) => Unknown(prov) |> rewrap
       | Arrow(ty1, ty2) =>
@@ -685,6 +687,8 @@ and Typ: {
     | (Forall(_), _) => false
     | (Atom(name1), Atom(name2)) => name1 == name2
     | (Atom(_), _) => false
+    | (Filter, Filter) => true
+    | (Filter, _) => false
     | (Label(name1), Label(name2)) =>
       LabeledTuple.match_labels(name1, name2)
     | (Label(_), _) => false

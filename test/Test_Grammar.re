@@ -136,6 +136,7 @@ let sample_type = (cls_typ: Typ.cls): Grammar.UnitGrammar.typ => {
       | Atom(Float) => float()
       | Atom(String) => string()
       | Atom(Nat) => nat()
+      | Filter => filter()
       | List => list(unknown(Hole(EmptyHole)))
       | Arrow => arrow(unknown(Hole(EmptyHole)), unknown(Hole(EmptyHole)))
       | Var => var("x")

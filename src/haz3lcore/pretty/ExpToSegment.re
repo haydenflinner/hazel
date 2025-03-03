@@ -134,6 +134,7 @@ let external_precedence_typ = (tp: Typ.t) =>
   | Unknown(Hole(EmptyHole))
   | Var(_)
   | Atom(_)
+  | Filter
   | Label(_)
   | TupLabel(_) => Precedence.max
 
@@ -480,6 +481,7 @@ and parenthesize_typ =
   | Unknown(SynSwitch)
   | Unknown(Hole(EmptyHole))
   | Atom(_) => typ
+  | Filter => typ
 
   // Other forms
   | Parens(t) =>
@@ -736,18 +738,17 @@ let rec exp_to_pretty = (~settings: Settings.t, exp: Exp.t): pretty => {
   | Filter(Residue(_), _) => failwith("printing these not implemented yet")
   | Filter(Filter({pat, act}), e) =>
     let id = exp |> Exp.rep_id;
-    let* p = go(pat);
+    let name = Option.map(FilterAction.string_of_t, act);
+    let filter =
+      switch (name) {
+      | Some(name) => Ap(Forward, Var(name) |> Exp.fresh, pat) |> Exp.fresh
+      | None => pat
+      };
+    let* p = go(filter);
     let+ e = go(e);
     settings.show_filters
       ? {
-        let form =
-          switch (act) {
-          | (Step, One) => Form.FilterPause
-          | (Step, All) => Form.FilterDebug
-          | (Eval, One) => Form.FilterHide
-          | (Eval, All) => Form.FilterEval
-          };
-        [mk_form(form, id, [p])] @ e;
+        [mk_form(Form.Filter, id, [p])] @ e;
       }
       : e;
   // Forms which should be removed by substitute_closures
@@ -1276,6 +1277,7 @@ and typ_to_pretty = (~settings: Settings.t, typ: Typ.t): pretty => {
   | Atom(Bool) => text_to_pretty(typ |> Typ.rep_id, Sort.Typ, "Bool")
   | Atom(String) => text_to_pretty(typ |> Typ.rep_id, Sort.Typ, "String")
   | Atom(Nat) => text_to_pretty(typ |> Typ.rep_id, Sort.Typ, "Nat")
+  | Filter => text_to_pretty(typ |> Typ.rep_id, Sort.Typ, "Filter")
   | List(t) =>
     let id = typ |> Typ.rep_id;
     let+ t = go(t);

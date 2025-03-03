@@ -268,38 +268,25 @@ and exp_term: unsorted => (Exp.term, list(Id.t)) = {
         | (["fix", "->"], [Pat(pat)]) => FixF(pat, r, None)
         | (["typfun", "->"], [TPat(tpat)]) => TypFun(tpat, r, None)
         | (["let", "=", "in"], [Pat(pat), Exp(def)]) => Let(pat, def, r)
-        | (["hide", "in"], [Exp(filter)]) =>
-          Filter(
-            Filter({
-              act: (Eval, One),
-              pat: filter,
-            }),
-            r,
-          )
-        | (["eval", "in"], [Exp(filter)]) =>
-          Filter(
-            Filter({
-              act: (Eval, All),
-              pat: filter,
-            }),
-            r,
-          )
-        | (["pause", "in"], [Exp(filter)]) =>
-          Filter(
-            Filter({
-              act: (Step, One),
-              pat: filter,
-            }),
-            r,
-          )
         | (["debug", "in"], [Exp(filter)]) =>
-          Filter(
-            Filter({
-              act: (Step, All),
-              pat: filter,
-            }),
-            r,
-          )
+          switch (filter.term) {
+          | Ap(Forward, {term: Var(name), _}, pat) =>
+            Filter(
+              Filter({
+                act: FilterAction.t_of_string(name),
+                pat,
+              }),
+              r,
+            )
+          | _ =>
+            Filter(
+              Filter({
+                act: None,
+                pat: filter,
+              }),
+              r,
+            )
+          }
         | (["use", "in"], [Typ(ty)]) => Use(ty, r)
         | (["type", "=", "in"], [TPat(tpat), Typ(def)]) =>
           TyAlias(tpat, def, r)

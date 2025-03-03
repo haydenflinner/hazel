@@ -367,10 +367,7 @@ type compound_form =
   | Rule
   | Pipeline
   // DOUBLE DELIMITERS
-  | FilterHide
-  | FilterEval
-  | FilterPause
-  | FilterDebug
+  | Filter
   | Use
   // TRIPLE DELIMITERS
   | Let
@@ -454,10 +451,7 @@ let get: compound_form => t =
   | Rule => mk(ds, ["|", "=>"], mk_bin'(P.rule_sep, Rul, Exp, [Pat], Exp))
   | Pipeline => mk_infix("|>", Exp, P.eqs) // in OCaml, pipeline precedence is in same class as '=', '<', etc.
   // DOUBLE DELIMITERS
-  | FilterHide => mk(ds, ["hide", "in"], mk_pre(P.let_, Exp, [Exp]))
-  | FilterEval => mk(ds, ["eval", "in"], mk_pre(P.let_, Exp, [Exp]))
-  | FilterPause => mk(ds, ["pause", "in"], mk_pre(P.let_, Exp, [Exp]))
-  | FilterDebug => mk(ds, ["debug", "in"], mk_pre(P.let_, Exp, [Exp]))
+  | Filter => mk(ds, ["debug", "in"], mk_pre(P.let_, Exp, [Exp]))
   | Use => mk(ds, ["use", "in"], mk_pre(P.let_, Exp, [Typ]))
   // TRIPLE DELIMITERS
   | Let => mk(ds, ["let", "=", "in"], mk_pre(P.let_, Exp, [Pat, Exp]))

@@ -264,7 +264,7 @@ let tests = (
               filter(
                 Filter({
                   pat: int(1),
-                  act: (Step, One),
+                  act: Some((Step, One)),
                 }),
                 int(2),
               )
@@ -272,7 +272,7 @@ let tests = (
           );
         let serialized = Printer.of_segment(~holes=Some("?"), segment);
 
-        check(string, "Pause", serialized, {|pause 1 in 2|});
+        check(string, "Pause", serialized, {|debug stop(1) in 2|});
       },
     ),
     test_case(

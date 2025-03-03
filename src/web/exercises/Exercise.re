@@ -643,7 +643,7 @@ let wrap_filter =
   term:
     Filter(
       Filter({
-        act: Language.FilterAction.(act, One),
+        act: Some(Language.FilterAction.(act, One)),
         pat: {
           term:
             Constructor(

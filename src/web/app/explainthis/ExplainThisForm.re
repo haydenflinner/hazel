@@ -233,6 +233,7 @@ type form_id =
   | FloatTyp
   | BoolTyp
   | StrTyp
+  | FilterTyp
   | VarTyp
   | ListTyp
   | ForallTyp
@@ -253,10 +254,7 @@ type form_id =
   | MultiHoleTPat
   | VarTPat
   | PipelineExp
-  | FilterPause
-  | FilterEval
-  | FilterDebug
-  | FilterHide
+  | Filter
   | FilterSelector;
 
 [@deriving (show({with_path: false}), sexp, yojson)]
@@ -340,6 +338,7 @@ type group_id =
   | FloatTyp
   | BoolTyp
   | StrTyp
+  | FilterTyp
   | VarTyp
   | ListTyp
   | ForallTyp
@@ -359,10 +358,7 @@ type group_id =
   | EmptyHoleTPat
   | MultiHoleTPat
   | VarTPat
-  | FilterPause
-  | FilterEval
-  | FilterDebug
-  | FilterHide
+  | Filter
   | FilterSelector;
 
 [@deriving (show({with_path: false}), sexp, yojson)]

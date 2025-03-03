@@ -9,6 +9,7 @@ type cls =
   | MultiHole
   | SynSwitch
   | Internal
+  | Filter
   | Arrow
   | Prod
   | TupLabel
@@ -82,6 +83,7 @@ let cls_of_term: Grammar.typ_term('a) => cls =
   | Unknown(SynSwitch) => SynSwitch
   | Unknown(Internal) => Internal
   | Atom(c) => Atom(c)
+  | Filter => Filter
   | List(_) => List
   | Arrow(_) => Arrow
   | Var(_) => Var
@@ -102,6 +104,7 @@ let show_cls: cls => string =
   | SynSwitch => "Synthetic type"
   | Internal => "Internal type"
   | Atom(_) => "Base type"
+  | Filter => "Filter type"
   | Var => "Type variable"
   | Constructor => "Sum constructor"
   | List => "List type"
@@ -122,6 +125,7 @@ let rec is_arrow = (typ: t) => {
   | Arrow(_) => true
   | Unknown(_)
   | Atom(_)
+  | Filter
   | List(_)
   | Label(_)
   | Prod(_)
@@ -140,6 +144,7 @@ let rec is_forall = (typ: t) => {
   | Forall(_) => true
   | Unknown(_)
   | Atom(_)
+  | Filter
   | Arrow(_)
   | List(_)
   | Label(_)
@@ -202,6 +207,7 @@ let rec free_vars = (~bound=[], ty: t): list(Var.t) =>
   switch (term_of(ty)) {
   | Unknown(_)
   | Atom(_)
+  | Filter
   | Label(_) => []
   | Ap(t1, t2) => free_vars(~bound, t1) @ free_vars(~bound, t2)
   | Var(v) => List.mem(v, bound) ? [] : [v]
@@ -293,6 +299,8 @@ let rec join = (~resolve=false, ctx: Ctx.t, ty1: t, ty2: t): option(t) => {
   | (Forall(_), _) => None
   | (Atom(c1), Atom(c2)) when c1 == c2 => Some(ty1)
   | (Atom(_), _) => None
+  | (Filter, Filter) => Some(ty1)
+  | (Filter, _) => None
   | (Label(_), Label("")) => Some(ty1)
   | (Label(""), Label(_)) => Some(ty2)
   | (Label(name1), Label(name2))
@@ -340,6 +348,7 @@ let rec match_synswitch = (t1: t, t2: t) => {
   // These cases can't have a synswitch inside
   | (Unknown(_), _)
   | (Atom(_), _)
+  | (Filter, _)
   | (Label(_), _)
   | (Var(_), _)
   | (Ap(_), _)
@@ -408,6 +417,7 @@ let rec normalize = (~rec_counter=0, ctx: Ctx.t, ty: t): t => {
     }
   | Unknown(_)
   | Atom(_)
+  | Filter
   | Label(_) => ty
   | Parens(t) => normalize(ctx, t)
   | List(t) => List(normalize(ctx, t)) |> rewrap
@@ -594,6 +604,7 @@ let rec is_syn = (ty: t): bool =>
   | Unknown(SynSwitch) => true
   | Unknown(_)
   | Atom(_)
+  | Filter
   | Label(_)
   | Var(_)
   | Ap(_)
@@ -610,6 +621,7 @@ let rec is_ana_atom = (ty: t) =>
   | TupLabel(_, x)
   | Parens(x) => is_ana_atom(x)
   | Atom(a) => Some(a)
+  | Filter
   | Unknown(_)
   | Label(_)
   | Var(_)
@@ -629,6 +641,7 @@ let rec is_syn_fun = (ty: t): bool =>
   | Arrow(t1, t2) => is_syn(t1) && is_syn_fun(t2)
   | Unknown(_)
   | Atom(_)
+  | Filter
   | Label(_)
   | Var(_)
   | Ap(_)
@@ -648,6 +661,7 @@ let rec is_syn_plus = (ty: t): bool =>
   | Forall(_, t) => is_syn(t)
   | Unknown(_)
   | Atom(_)
+  | Filter
   | Label(_)
   | Var(_)
   | Ap(_)
@@ -665,6 +679,7 @@ let rec needs_parens = (ty: t): bool =>
   | Unknown(_)
   | Atom(_)
   | Label(_)
+  | Filter
   | TupLabel(_, _)
   | List(_) /* is already wrapped in [] */
   | Var(_) => false
@@ -695,6 +710,7 @@ let rec pretty_print = (ty: t): string =>
   | Atom(String) => "String"
   | Atom(Nat) => "Nat"
   | Atom(SInt) => "SInt"
+  | Filter => "Filter"
   | Var(tvar) => tvar
   | List(t) => "[" ++ pretty_print(t) ++ "]"
   | Arrow(t1, t2) => paren_pretty_print(t1) ++ " -> " ++ pretty_print(t2)

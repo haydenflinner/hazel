@@ -676,13 +676,83 @@ and uexp_to_info_map =
     | Test(e) =>
       let (e, m) = go(~ana=Atom(Bool) |> Typ.temp, e, m);
       add(~self=Just(Prod([]) |> Typ.temp), ~co_ctx=e.co_ctx, m);
-    | Filter(Filter({pat: cond, _}), body) =>
-      let (cond, m) =
-        go(~ana=Unknown(SynSwitch) |> Typ.temp, cond, m, ~is_in_filter=true);
+    | Filter(Filter({pat, act}), body) =>
+      let (pat, m) = {
+        let uexp = pat;
+        let ids = pat.annotation.ids;
+        let add' = (~label_inference=?, ~self, ~co_ctx, m) => {
+          let info =
+            Info.derived_exp(
+              ~uexp,
+              ~ctx,
+              ~ana,
+              ~ancestors,
+              ~self=Option.value(~default=self, override_self),
+              ~co_ctx,
+              ~label_inference,
+              ~inferred_label,
+              ~label_sort,
+            );
+
+          (info, add_info(ids, InfoExp(info), m));
+        };
+        let add = (~self, ~co_ctx, m) =>
+          add'(~self=Common(self), ~co_ctx, m);
+        let ancestors = [Exp.rep_id(uexp)] @ ancestors;
+        let uexp_to_info_map =
+            (
+              ~ctx,
+              ~ana=Unknown(SynSwitch) |> Typ.temp,
+              ~is_in_filter=is_in_filter,
+              ~ancestors=ancestors,
+              uexp: Exp.t,
+              m: Map.t,
+            ) => {
+          uexp_to_info_map(~ctx, ~ana, ~is_in_filter, ~ancestors, uexp, m);
+        };
+        let go' = uexp_to_info_map(~ancestors);
+        let go = go'(~ctx);
+        switch (act, pat.term) {
+        | (None, Ap(_, fn, arg)) =>
+          let self_ty = Unknown(Internal) |> Typ.temp;
+          let fn_ana =
+            switch (Exp.ctr_name(fn)) {
+            | Some(name) =>
+              switch (Self.ctr_ana_typ(ctx, ana, name)) {
+              | Some(ty_ana) =>
+                switch (Typ.matched_arrow_strict(ctx, ty_ana)) {
+                | Some((ty1, ty2)) => Arrow(ty1, ty2) |> Typ.temp
+                | None => Arrow(syn, syn) |> Typ.temp
+                }
+              | None => Arrow(syn, syn) |> Typ.temp
+              }
+            | None => Arrow(syn, syn) |> Typ.temp
+            };
+          let (fn, m) =
+            go'(~ctx=Builtins.filter_keyword_ctx_init, ~ana=fn_ana, fn, m);
+          let (ty_in, _) = Typ.matched_arrow(ctx, fn.ty);
+          let (arg, m) = go(~ana=ty_in, arg, m, ~is_in_filter=true);
+          add(
+            ~self=Just(self_ty),
+            ~co_ctx=CoCtx.union([fn.co_ctx, arg.co_ctx]),
+            m,
+          );
+        | (None, _) =>
+          go'(
+            ~ctx=Builtins.filter_keyword_ctx_init,
+            ~ana=Filter |> Typ.temp,
+            pat,
+            m,
+          )
+        | (Some(_), _) =>
+          let self_ty = Unknown(Internal) |> Typ.temp;
+          go(~ana=self_ty, pat, m, ~is_in_filter=true);
+        };
+      };
       let (body, m) = go(~ana, body, m);
       add(
         ~self=Just(body.ty),
-        ~co_ctx=CoCtx.union([cond.co_ctx, body.co_ctx]),
+        ~co_ctx=CoCtx.union([pat.co_ctx, body.co_ctx]),
         m,
       );
     | Filter(Residue(_), body) =>
@@ -1687,6 +1757,7 @@ and utyp_to_info_map =
     add(m);
   | Unknown(_)
   | Atom(_) => add(m)
+  | Filter => add(m)
   | Var(_) =>
     /* Names are resolved in Info.status_typ */
     add(m)

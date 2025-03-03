@@ -456,3 +456,32 @@ let env_init: Environment.t =
     Environment.empty,
     Pervasives.builtins,
   );
+
+let filter_keyword_ctx_init: Ctx.t = {
+  let impl = _ => failwith("evaluating filter keyword");
+  let entries =
+    VarMap.empty
+    |> fn("eval", Unknown(Internal), Filter, impl)
+    |> fn("hide", Unknown(Internal), Filter, impl)
+    |> fn("stop", Unknown(Internal), Filter, impl)
+    |> fn("step", Unknown(Internal), Filter, impl)
+    |> List.map(
+         fun
+         | (name, Const(typ, _)) =>
+           Ctx.VarEntry({
+             name,
+             typ,
+             id: Id.invalid,
+           })
+         | (name, Fn(t1, t2, _)) =>
+           Ctx.VarEntry({
+             name,
+             typ: Arrow(t1, t2) |> Typ.fresh,
+             id: Id.invalid,
+           }),
+       );
+  Ctx.{
+    use_mode: Some(Int),
+    entries,
+  };
+};

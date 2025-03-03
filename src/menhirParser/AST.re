@@ -7,6 +7,25 @@ type filter_action =
   | Hide
   | Eval;
 
+let string_of_filter_action = action => {
+  switch (action) {
+  | Pause => "stop"
+  | Debug => "step"
+  | Hide => "hide"
+  | Eval => "eval"
+  };
+};
+
+let filter_action_of_string = string => {
+  switch (string) {
+  | "stop" => Some(Pause)
+  | "step" => Some(Debug)
+  | "hide" => Some(Hide)
+  | "eval" => Some(Eval)
+  | _ => None
+  };
+};
+
 [@deriving (show({with_path: false}), sexp, qcheck, eq)]
 type op_bin_float =
   | Plus
@@ -86,6 +105,7 @@ type typ =
   | IntType
   | SIntType
   | StringType
+  | FilterType
   | FloatType
   | BoolType
   | NatType
@@ -154,7 +174,7 @@ type exp =
   | Cast(exp, typ, typ)
   | FailedCast(exp, typ, typ)
   | EmptyHole
-  | Filter(filter_action, exp, exp)
+  | Filter(option(filter_action), exp, exp)
   | BuiltinFun(string)
   | Undefined
   | Seq(exp, exp)
@@ -416,7 +436,7 @@ let rec gen_exp_sized = (~minimal_idents: bool, n: int): QCheck.Gen.t(exp) => {
             let* fa = gen_filter_action;
             let* e1 = self((n - 1) / 2);
             let+ e2 = self((n - 1) / 2);
-            Filter(fa, e1, e2);
+            Filter(Some(fa), e1, e2);
           },
           {
             let* e1 = self((n - 1) / 2);
@@ -1150,6 +1170,7 @@ and shrink_typ: QCheck.Shrink.t(typ) =
         | FloatType
         | BoolType
         | NatType
+        | FilterType
         | UnknownType(_)
         | InvalidTyp(_) => Iter.empty
         }

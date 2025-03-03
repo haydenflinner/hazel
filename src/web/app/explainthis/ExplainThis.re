@@ -1879,30 +1879,9 @@ let get_doc =
             ),
           SeqExp.seqs,
         );
-      | Filter(Filter({act: (Step, One), pat}), body) =>
+      | Filter(Filter({act: _, pat}), body) =>
         message_single(
-          FilterExp.filter_pause(
-            ~p_id=Exp.rep_id(pat),
-            ~body_id=Exp.rep_id(body),
-          ),
-        )
-      | Filter(Filter({act: (Step, All), pat}), body) =>
-        message_single(
-          FilterExp.filter_debug(
-            ~p_id=Exp.rep_id(pat),
-            ~body_id=Exp.rep_id(body),
-          ),
-        )
-      | Filter(Filter({act: (Eval, All), pat}), body) =>
-        message_single(
-          FilterExp.filter_eval(
-            ~p_id=Exp.rep_id(pat),
-            ~body_id=Exp.rep_id(body),
-          ),
-        )
-      | Filter(Filter({act: (Eval, One), pat}), body) =>
-        message_single(
-          FilterExp.filter_hide(
+          FilterExp.filter(
             ~p_id=Exp.rep_id(pat),
             ~body_id=Exp.rep_id(body),
           ),
@@ -2374,6 +2353,7 @@ let get_doc =
     | Atom(Bool) => get_message(TerminalTyp.bool)
     | Atom(String) => get_message(TerminalTyp.str)
     | Atom(Nat) => get_message(TerminalTyp.nat)
+    | Filter => get_message(TerminalTyp.filter)
     | List(elem) =>
       let elem_id = List.nth(IdTagged.ids(elem), 0);
       get_message(
